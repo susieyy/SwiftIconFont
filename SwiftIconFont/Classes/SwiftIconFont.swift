@@ -6,7 +6,15 @@
 //  Copyright © 2016 Sedat Gokbek Ciftci. All rights reserved.
 //
 
-import UIKit
+#if os(iOS)
+	import UIKit
+	public typealias Image = UIImage
+	public typealias Font = UIFont
+#elseif os(OSX)
+	import AppKit
+	public typealias Image = NSImage
+	public typealias Font = NSFont
+#endif
 
 public enum Fonts {
     case FontAwesome
@@ -18,17 +26,26 @@ public enum Fonts {
     case MaterialIcon
 }
 
-public extension UIFont{
 
-    static func iconFontOfSize(font: Fonts, fontSize: CGFloat) -> UIFont {
-        let fontName = UIFont.getFontName(font)
+public extension Font{
+
+    static func iconFontOfSize(font: Fonts, fontSize: CGFloat) -> Font {
+        let fontName = Font.getFontName(font)
         var token: dispatch_once_t = 0
-        if (UIFont.fontNamesForFamilyName(fontName).count == 0) {
-            dispatch_once(&token) {
-                FontLoader.loadFont(fontName)
+        #if os(iOS)
+            if (Font.fontNamesForFamilyName(fontName).count == 0) {
+                dispatch_once(&token) {
+                    FontLoader.loadFont(fontName)
+                }
             }
-        }
-        return UIFont(name: UIFont.getFontName(font), size: fontSize)!
+        #elseif os(OSX)
+            if (NSFontManager.sharedFontManager().availableMembersOfFontFamily(fontName)?.count == 0) {
+                dispatch_once(&token) {
+                    FontLoader.loadFont(fontName)
+                }
+            }
+        #endif
+        return Font(name: Font.getFontName(font), size: fontSize)!
     }
 
     class func getFontName(font: Fonts) -> String {
@@ -60,21 +77,27 @@ public extension UIFont{
     }
 }
 
-public extension UIImage
+public extension Image
 {
-    public static func iconToImage(font: Fonts, iconCode: String, imageSize: CGSize,fontSize: CGFloat) -> UIImage
+    public static func iconToImage(font: Fonts, iconCode: String, imageSize: CGSize,fontSize: CGFloat) -> Image
     {
         let drawText = String.getIcon(font, code: iconCode)
-        
-        UIGraphicsBeginImageContextWithOptions(imageSize, false, 0)
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.alignment = NSTextAlignment.Center
-        
-        drawText!.drawInRect(CGRectMake(0, 0, imageSize.width, imageSize.height), withAttributes: [NSFontAttributeName : UIFont.iconFontOfSize(font, fontSize: fontSize)])
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
 
-        return image
+        #if os(iOS)
+            UIGraphicsBeginImageContextWithOptions(imageSize, false, 0)
+            drawText!.drawInRect(CGRectMake(0, 0, imageSize.width, imageSize.height), withAttributes: [NSFontAttributeName : Font.iconFontOfSize(font, fontSize: fontSize)])
+            let image = UIGraphicsGetImageFromCurrentImageContext()
+            UIGraphicsEndImageContext()
+            return image
+        #elseif os(OSX)
+            let image = Image(size: imageSize)
+            image.lockFocus()
+            drawText!.drawInRect(CGRectMake(0, 0, imageSize.width, imageSize.height), withAttributes: [NSFontAttributeName : Font.iconFontOfSize(font, fontSize: fontSize)])
+            image.unlockFocus()
+            return image
+        #endif
     }
 }
 
@@ -207,7 +230,7 @@ func getAttributedString(text: NSString, fontSize: CGFloat) -> NSAttributedStrin
         if let _ = fontArr[fontCode] {
             attributedString.replaceCharactersInRange(substringRange, withString: String.getIcon(fontType, code: fontCode)!)
             let newRange = NSRange(location: substringRange.location, length: 1)
-            attributedString.addAttribute(NSFontAttributeName, value: UIFont.iconFontOfSize(fontType, fontSize: fontSize), range: newRange)
+            attributedString.addAttribute(NSFontAttributeName, value: Font.iconFontOfSize(fontType, fontSize: fontSize), range: newRange)
         }
 
     })
@@ -282,7 +305,7 @@ func GetFontTypeWithSelectedIcon(icon: String) -> Fonts {
 
 // Extensions
 
-
+#if os(iOS)
 public extension UILabel {
     func parseIcon() {
         let text = replaceString(self.text! as NSString)
@@ -334,3 +357,4 @@ public extension UITabBarItem {
         self.image = UIImage.iconToImage(font, iconCode: iconCode, imageSize: imageSize, fontSize: fontSize)
     }
 }
+#endif

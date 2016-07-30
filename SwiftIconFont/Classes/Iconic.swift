@@ -6,7 +6,7 @@
 //  Copyright © 2016 Sedat Gokbek Ciftci. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
 public let iconicIconArr: [String: String] =  [
     "account-login":"\u{e000}",
