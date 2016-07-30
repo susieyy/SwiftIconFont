@@ -6,7 +6,7 @@
 //  Copyright © 2016 Sedat Gökbek ÇİFTÇİ. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
 public let temifyIconArr: [String: String] =  [
     "wand":"\u{e600}",
